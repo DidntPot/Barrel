@@ -22,7 +22,7 @@ import com.github.steveice10.packetlib.event.server.SessionAddedEvent;
 import com.github.steveice10.packetlib.event.server.SessionRemovedEvent;
 import com.github.steveice10.packetlib.tcp.TcpServer;
 import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
-import com.nukkitx.protocol.bedrock.v465.Bedrock_v465;
+import com.nukkitx.protocol.bedrock.v448.Bedrock_v465;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import org.barrelmc.barrel.auth.AuthManager;
