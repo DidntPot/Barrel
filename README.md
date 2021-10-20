@@ -6,8 +6,8 @@ Java</b><br>
 ## Requirements
 
 - Java 11
-- Minecraft: Java Edition v1.16.5
-- Bedrock Edition server v1.17.0
+- Minecraft: Java Edition v1.17.1
+- Bedrock Edition server v1.17.30
 
 ## Need implemented
 
