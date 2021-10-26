@@ -7,15 +7,22 @@ Java</b><br>
 
 - Java 11
 - Minecraft: Java Edition v1.17.1
-- Bedrock Edition server v1.17.30
+- Bedrock Edition server v1.17.40
 
 ## Need implemented
 
-- Chunks (Only pm3 is working now)
+- Chunks
+- Item
+- Movement
+- Packet
+- Block
+- Gui
 - Inventory
-- And More...
+- Entity
+- Paticle
 
 ## Credits
 
 - [TunnelMC](https://github.com/THEREALWWEFAN231/TunnelMC) (For Chunk Stuff)
 - [EZ4H](https://github.com/Project-EZ4H/EZ4H) (Archived)
+- [Barrel](https://github.com/BarrelMC/Barrel) (Original)
