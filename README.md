@@ -6,12 +6,12 @@ Java</b><br>
 ## Requirements
 
 - Java 11
-- Minecraft: Java Edition v1.18.2
-- Bedrock Edition server v1.18.10
+- Minecraft: Java Edition v1.18.0 , 1.18.1
+- Bedrock Edition server v1.18.12
 
 ## Need implemented
 
-- Chunks
+- Chunks (convert problem)
 - Item
 - Movement
 - Block
