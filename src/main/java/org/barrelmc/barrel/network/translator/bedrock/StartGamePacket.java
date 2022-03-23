@@ -52,9 +52,9 @@ public class StartGamePacket implements BedrockPacketTranslator {
         Vector3f position = packet.getPlayerPosition();
         Vector2f rotation = packet.getRotation();
         ClientboundPlayerPositionPacket serverPlayerPositionRotationPacket = new ClientboundPlayerPositionPacket(position.getX(), position.getY(), position.getZ(), rotation.getY(), rotation.getX(), 1, true);
-        byte[] data = ((packet.getServerEngine() == "") ? "Barrel Dev" : packet.getServerEngine()).getBytes(StandardCharsets.UTF_8);
-        ClientboundCustomPayloadPacket serverPluginMessagePacket1 = new ClientboundCustomPayloadPacket("minecraft:register", data);
-        ClientboundCustomPayloadPacket serverPluginMessagePacket2 = new ClientboundCustomPayloadPacket("minecraft:brand", data);
+//         byte[] data = ((packet.getServerEngine() == "") ? "Barrel Dev" : packet.getServerEngine()).getBytes(StandardCharsets.UTF_8);
+//         ClientboundCustomPayloadPacket serverPluginMessagePacket1 = new ClientboundCustomPayloadPacket("minecraft:register", data);
+//         ClientboundCustomPayloadPacket serverPluginMessagePacket2 = new ClientboundCustomPayloadPacket("minecraft:brand", data);
         ClientboundSetDefaultSpawnPositionPacket defaultSpawnPositionPacket = new ClientboundSetDefaultSpawnPositionPacket(new Position(packet.getDefaultSpawn().getX(), packet.getDefaultSpawn().getY(), packet.getDefaultSpawn().getZ()), 0);
         ClientboundSetChunkCacheCenterPacket clientboundSetChunkCacheCenterPacket = new ClientboundSetChunkCacheCenterPacket((int)position.getX() >> 4, (int)position.getZ() >> 4); 
         player.javaSession.send(serverPluginMessagePacket1);
@@ -71,33 +71,5 @@ public class StartGamePacket implements BedrockPacketTranslator {
         player.gameType = packet.getPlayerGameType();
         player.uniqueEntityId = ((int) packet.getUniqueEntityId());
         player.runtimeEntityId = ((int) packet.getRuntimeEntityId());
-    }
-
-    private static byte[] writeVarInt(int value) {
-        byte[] data = new byte[getVarIntLength(value)];
-        int index = 0;
-        do {
-            byte temp = (byte) (value & 0b01111111);
-            value >>>= 7;
-            if (value != 0) {
-                temp |= 0b10000000;
-            }
-            data[index] = temp;
-            index++;
-        } while (value != 0);
-        return data;
-    }
-
-    private static int getVarIntLength(int number) {
-        if ((number & 0xFFFFFF80) == 0) {
-            return 1;
-        } else if ((number & 0xFFFFC000) == 0) {
-            return 2;
-        } else if ((number & 0xFFE00000) == 0) {
-            return 3;
-        } else if ((number & 0xF0000000) == 0) {
-            return 4;
-        }
-        return 5;
     }
 }
