@@ -1,5 +1,4 @@
 package org.barrelmc.barrel.network.translator.java;
-
 import com.github.steveice10.packetlib.packet.Packet;
 import com.nukkitx.math.vector.Vector3i;
 import com.nukkitx.protocol.bedrock.data.PlayerActionType;
@@ -11,16 +10,25 @@ public class ClientPlayerStatePacket implements JavaPacketTranslator {
 
     @Override
     public void translate(Packet pk, Player player) {
-        com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerStatePacket packet = (com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerStatePacket) pk;
+        com.github.steveice10.mc.protocol.packet.ingame.serverbound.player.ServerboundPlayerCommandPacket packet = (com.github.steveice10.mc.protocol.packet.ingame.serverbound.player.ServerboundPlayerCommandPacket) pk;
 
         switch (packet.getState()) {
+            case START_ELYTRA_FLYING: {
+                PlayerActionPacket playerActionPacket = new PlayerActionPacket();
+                playerActionPacket.setAction(PlayerActionType.STOP_GLIDE);
+                playerActionPacket.setBlockPosition(Vector3i.ZERO);
+                playerActionPacket.setFace(0);
+                playerActionPacket.setRuntimeEntityId(player.runtimeEntityId);
+                player.bedrockClient.getSession().sendPacket(playerActionPacket);
+                break;
+            }
             case START_SNEAKING: {
                 PlayerActionPacket playerActionPacket = new PlayerActionPacket();
                 playerActionPacket.setAction(PlayerActionType.START_SNEAK);
                 playerActionPacket.setBlockPosition(Vector3i.ZERO);
                 playerActionPacket.setFace(0);
-                playerActionPacket.setRuntimeEntityId(player.getRuntimeEntityId());
-                player.getBedrockClient().getSession().sendPacket(playerActionPacket);
+                playerActionPacket.setRuntimeEntityId(player.runtimeEntityId);
+                player.bedrockClient.getSession().sendPacket(playerActionPacket);
                 break;
             }
             case STOP_SNEAKING: {
@@ -28,8 +36,8 @@ public class ClientPlayerStatePacket implements JavaPacketTranslator {
                 playerActionPacket.setAction(PlayerActionType.STOP_SNEAK);
                 playerActionPacket.setBlockPosition(Vector3i.ZERO);
                 playerActionPacket.setFace(0);
-                playerActionPacket.setRuntimeEntityId(player.getRuntimeEntityId());
-                player.getBedrockClient().getSession().sendPacket(playerActionPacket);
+                playerActionPacket.setRuntimeEntityId(player.runtimeEntityId);
+                player.bedrockClient.getSession().sendPacket(playerActionPacket);
                 break;
             }
             case START_SPRINTING: {
@@ -37,8 +45,8 @@ public class ClientPlayerStatePacket implements JavaPacketTranslator {
                 playerActionPacket.setAction(PlayerActionType.START_SPRINT);
                 playerActionPacket.setBlockPosition(Vector3i.ZERO);
                 playerActionPacket.setFace(0);
-                playerActionPacket.setRuntimeEntityId(player.getRuntimeEntityId());
-                player.getBedrockClient().getSession().sendPacket(playerActionPacket);
+                playerActionPacket.setRuntimeEntityId(player.runtimeEntityId);
+                player.bedrockClient.getSession().sendPacket(playerActionPacket);
                 break;
             }
             case STOP_SPRINTING: {
@@ -46,8 +54,8 @@ public class ClientPlayerStatePacket implements JavaPacketTranslator {
                 playerActionPacket.setAction(PlayerActionType.STOP_SPRINT);
                 playerActionPacket.setBlockPosition(Vector3i.ZERO);
                 playerActionPacket.setFace(0);
-                playerActionPacket.setRuntimeEntityId(player.getRuntimeEntityId());
-                player.getBedrockClient().getSession().sendPacket(playerActionPacket);
+                playerActionPacket.setRuntimeEntityId(player.runtimeEntityId);
+                player.bedrockClient.getSession().sendPacket(playerActionPacket);
                 break;
             }
         }

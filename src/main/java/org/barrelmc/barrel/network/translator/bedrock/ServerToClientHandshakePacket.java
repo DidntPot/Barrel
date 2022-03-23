@@ -26,16 +26,16 @@ public class ServerToClientHandshakePacket implements BedrockPacketTranslator {
             URI x5u = saltJwt.getHeader().getX509CertURL();
             ECPublicKey serverKey = EncryptionUtils.generateKey(x5u.toASCIIString());
             SecretKey key = EncryptionUtils.getSecretKey(
-                    player.getPrivateKey(),
+                    player.privateKey,
                     serverKey,
                     Base64.getDecoder().decode(saltJwt.getJWTClaimsSet().getStringClaim("salt"))
             );
-            player.getBedrockClient().getSession().enableEncryption(key);
+            player.bedrockClient.getSession().enableEncryption(key);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         ClientToServerHandshakePacket clientToServerHandshake = new ClientToServerHandshakePacket();
-        player.getBedrockClient().getSession().sendPacketImmediately(clientToServerHandshake);
+        player.bedrockClient.getSession().sendPacketImmediately(clientToServerHandshake);
     }
 }

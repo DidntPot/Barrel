@@ -10,6 +10,7 @@ import com.github.steveice10.mc.auth.service.SessionService;
 import com.github.steveice10.mc.protocol.MinecraftConstants;
 import com.github.steveice10.mc.protocol.MinecraftProtocol;
 import com.github.steveice10.mc.protocol.ServerLoginHandler;
+import com.github.steveice10.mc.protocol.codec.MinecraftCodec;
 import com.github.steveice10.mc.protocol.data.status.PlayerInfo;
 import com.github.steveice10.mc.protocol.data.status.ServerStatusInfo;
 import com.github.steveice10.mc.protocol.data.status.VersionInfo;
@@ -22,8 +23,9 @@ import com.github.steveice10.packetlib.event.server.SessionAddedEvent;
 import com.github.steveice10.packetlib.event.server.SessionRemovedEvent;
 import com.github.steveice10.packetlib.tcp.TcpServer;
 import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
-import com.nukkitx.protocol.bedrock.v475.Bedrock_v475;
-import lombok.Getter;
+import com.nukkitx.protocol.bedrock.v486.Bedrock_v486;
+
+
 import net.kyori.adventure.text.Component;
 import org.barrelmc.barrel.auth.AuthManager;
 import org.barrelmc.barrel.auth.server.AuthServer;
@@ -32,28 +34,21 @@ import org.barrelmc.barrel.network.JavaPacketHandler;
 import org.barrelmc.barrel.player.Player;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ProxyServer {
-
-    @Getter
-    private static ProxyServer instance = null;
-    @Getter
-    private final Map<String, Player> onlinePlayers = new ConcurrentHashMap<>();
-    @Getter
-    private final BedrockPacketCodec bedrockPacketCodec = Bedrock_v475.V475_CODEC;
-
-    @Getter
-    private final Path dataPath;
-
-    @Getter
-    private Config config;
+    public static ProxyServer instance = null;
+    public final Map<String, Player> onlinePlayers = new ConcurrentHashMap<>();
+    public final BedrockPacketCodec bedrockPacketCodec = Bedrock_v486.V486_CODEC;
+    public final Path dataPath;
+    public Config config;
 
     public ProxyServer(String dataPath) {
         instance = this;
@@ -86,13 +81,29 @@ public class ProxyServer {
     private void startServer() {
         SessionService sessionService = new SessionService();
 
-        Server server = new TcpServer(this.config.getBindAddress(), this.config.getPort(), MinecraftProtocol.class);
+        Server server = new TcpServer(this.config.bindAddress, this.config.port, MinecraftProtocol::new);
         server.setGlobalFlag(MinecraftConstants.SESSION_SERVICE_KEY, sessionService);
         server.setGlobalFlag(MinecraftConstants.VERIFY_USERS_KEY, false);
-        server.setGlobalFlag(MinecraftConstants.SERVER_INFO_BUILDER_KEY, (ServerInfoBuilder) session -> new ServerStatusInfo(new VersionInfo(MinecraftConstants.GAME_VERSION, MinecraftConstants.PROTOCOL_VERSION), new PlayerInfo(10, 0, new GameProfile[0]), Component.text(this.config.getMotd()), null));
+        GameProfile[] gameProfiles = new GameProfile[0];
+        server.setGlobalFlag(MinecraftConstants.SERVER_INFO_BUILDER_KEY, (ServerInfoBuilder) session ->
+                new ServerStatusInfo(
+                        new VersionInfo(
+                                MinecraftCodec.CODEC.getMinecraftVersion(),
+                                MinecraftCodec.CODEC.getProtocolVersion()
+                        ),
+                        new PlayerInfo(
+                                69,
+                                0,
+                                gameProfiles
+                        ),
+                        Component.text(this.config.motd),
+                        test()
+                )
+        );
         server.setGlobalFlag(MinecraftConstants.SERVER_LOGIN_HANDLER_KEY, (ServerLoginHandler) session -> {
             GameProfile profile = session.getFlag(MinecraftConstants.PROFILE_KEY);
-            if (AuthManager.getInstance().getLoginPlayers().get(profile.getName()) == null) {
+            if (AuthManager.getInstance().loginPlayers.get(profile.getName()) == null) {
+                //System.out.println("hmmmmmm");
                 session.addListener(new AuthServer(session, profile.getName()));
             }
         });
@@ -100,7 +111,7 @@ public class ProxyServer {
         server.addListener(new ServerAdapter() {
             @Override
             public void serverClosed(ServerClosedEvent event) {
-                // TODO: disconnect all bedrock client
+                // TODO: disconnect all java client
                 System.out.println("Server closed.");
             }
 
@@ -113,20 +124,32 @@ public class ProxyServer {
             public void sessionRemoved(SessionRemovedEvent event) {
                 GameProfile profile = event.getSession().getFlag(MinecraftConstants.PROFILE_KEY);
                 Player player = getPlayerByName(profile.getName());
-                if (AuthManager.getInstance().getLoginPlayers().get(player.getUsername())) {
-                    AuthManager.getInstance().getLoginPlayers().remove(player.getUsername());
+                if (AuthManager.getInstance().loginPlayers.get(player.username)) {
+                    AuthManager.getInstance().loginPlayers.remove(player.username);
                 }
                 player.disconnect("logged out");
             }
         });
 
-        System.out.println("Binding to " + this.config.getBindAddress() + " on port " + this.config.getPort());
+        System.out.println("Binding to " + this.config.bindAddress + " on port " + this.config.port);
         server.bind();
-        System.out.println("BarrelProxy is running on [" + this.config.getBindAddress() + "::" + this.config.getPort() + "]");
+        System.out.println("BarrelProxy is running on [" +  this.config.bindAddress + "::" + this.config.port + "]");
     }
 
     public Player getPlayerByName(String username) {
         return this.onlinePlayers.get(username);
+    }
+
+    public byte[] test(){
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try{
+            BufferedImage bImage = ImageIO.read(new FileInputStream(dataPath.toString() + "/barrel.png"));
+            ImageIO.write(bImage, "png", bos );
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+        }
+        byte[] data = bos.toByteArray();
+        return data;
     }
 
     public CompoundTag getDimensionTag() {
@@ -158,7 +181,7 @@ public class ProxyServer {
         overworldTag.put(new ByteTag("natural", (byte) 1));
         overworldTag.put(new FloatTag("ambient_light", 0f));
         overworldTag.put(new StringTag("infiniburn", "minecraft:infiniburn_overworld"));
-        overworldTag.put(new ByteTag("respawn_anchor_works", (byte) 0));
+        overworldTag.put(new ByteTag("respawn_anchor_works", (byte) 1));
         overworldTag.put(new ByteTag("has_skylight", (byte) 1));
         overworldTag.put(new ByteTag("bed_works", (byte) 1));
         overworldTag.put(new StringTag("effects", "minecraft:overworld"));

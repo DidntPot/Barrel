@@ -16,6 +16,6 @@ public class ResourcePackStackPacket implements BedrockPacketTranslator {
     public void translate(BedrockPacket pk, Player player) {
         ResourcePackClientResponsePacket response = new ResourcePackClientResponsePacket();
         response.setStatus(ResourcePackClientResponsePacket.Status.COMPLETED);
-        player.getBedrockClient().getSession().sendPacketImmediately(response);
+        player.bedrockClient.getSession().sendPacketImmediately(response);
     }
 }

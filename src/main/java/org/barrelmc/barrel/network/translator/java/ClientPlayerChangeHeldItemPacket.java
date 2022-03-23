@@ -9,12 +9,12 @@ public class ClientPlayerChangeHeldItemPacket implements JavaPacketTranslator {
 
     @Override
     public void translate(Packet pk, Player player) {
-        com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerChangeHeldItemPacket packet = (com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerChangeHeldItemPacket) pk;
+        com.github.steveice10.mc.protocol.packet.ingame.serverbound.player.ServerboundSetCarriedItemPacket packet = (com.github.steveice10.mc.protocol.packet.ingame.serverbound.player.ServerboundSetCarriedItemPacket) pk;
         PlayerHotbarPacket playerHotbarPacket = new PlayerHotbarPacket();
 
         playerHotbarPacket.setContainerId(0);
         playerHotbarPacket.setSelectedHotbarSlot(packet.getSlot());
         playerHotbarPacket.setSelectHotbarSlot(true);
-        player.getBedrockClient().getSession().sendPacket(playerHotbarPacket);
+        player.bedrockClient.getSession().sendPacket(playerHotbarPacket);
     }
 }

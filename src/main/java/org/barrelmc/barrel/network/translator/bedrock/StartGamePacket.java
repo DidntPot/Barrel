@@ -1,20 +1,24 @@
 package org.barrelmc.barrel.network.translator.bedrock;
 
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerDifficultyPacket;
-import com.github.steveice10.mc.protocol.data.game.entity.EntityStatus;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerJoinGamePacket;
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerPositionRotationPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.ServerEntityStatusPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerPluginMessagePacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundChangeDifficultyPacket;
+import com.github.steveice10.mc.protocol.data.game.entity.EntityEvent;
+import com.github.steveice10.mc.protocol.data.game.entity.metadata.Position;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.ClientboundEntityEventPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundSetChunkCacheCenterPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundSetDefaultSpawnPositionPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundCustomPayloadPacket;
 import com.github.steveice10.mc.protocol.data.game.setting.Difficulty;
 import com.nukkitx.math.vector.Vector2f;
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
-import com.nukkitx.protocol.bedrock.packet.SetLocalPlayerAsInitializedPacket;
 import org.barrelmc.barrel.network.translator.TranslatorUtils;
 import org.barrelmc.barrel.network.translator.interfaces.BedrockPacketTranslator;
 import org.barrelmc.barrel.player.Player;
 import org.barrelmc.barrel.server.ProxyServer;
+
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 public class StartGamePacket implements BedrockPacketTranslator {
 
@@ -22,61 +26,78 @@ public class StartGamePacket implements BedrockPacketTranslator {
     public void translate(BedrockPacket pk, Player player) {
         com.nukkitx.protocol.bedrock.packet.StartGamePacket packet = (com.nukkitx.protocol.bedrock.packet.StartGamePacket) pk;
 
-        ServerJoinGamePacket serverJoinGamePacket = new ServerJoinGamePacket(
+        ClientboundLoginPacket serverJoinGamePacket = new ClientboundLoginPacket(
                 (int) packet.getRuntimeEntityId(), false,
                 TranslatorUtils.translateGamemodeToJE(packet.getPlayerGameType()),
                 TranslatorUtils.translateGamemodeToJE(packet.getPlayerGameType()),
-                1, new String[]{"minecraft:world"}, ProxyServer.getInstance().getDimensionTag(),
-                ProxyServer.getInstance().getOverworldTag(), "minecraft:world", packet.getSeed(),
-                0, 16, true, true, true, false
+                1, new String[]{"minecraft:world"}, ProxyServer.instance.getDimensionTag(),
+                ProxyServer.instance.getOverworldTag(), "minecraft:world", packet.getSeed(),
+                69, 16, 16, false, true, false, (packet.getGeneratorId() == 2)
         );
+        for (com.nukkitx.protocol.bedrock.packet.StartGamePacket.ItemEntry itemEntry : packet.getItemEntries()) {
+			if (itemEntry.getIdentifier().equals("minecraft:shield")) {
+				player.bedrockClient.getSession().getHardcodedBlockingId().set(itemEntry.getId());
+				break;
+			}
+		}
+        
         Difficulty difficulty;
         try {
-            difficulty = convertDifficultyToJE(packet.getDifficulty());
+            difficulty = TranslatorUtils.convertDifficultyToJE(packet.getDifficulty());
         } catch (Exception e) {
             difficulty = Difficulty.NORMAL;
         }
-        ServerDifficultyPacket serverDifficultyPacket = new ServerDifficultyPacket(difficulty, true);
-        ServerEntityStatusPacket serverEntityStatusPacket = new ServerEntityStatusPacket((int) packet.getRuntimeEntityId(), EntityStatus.PLAYER_OP_PERMISSION_LEVEL_0);
+        ClientboundChangeDifficultyPacket serverDifficultyPacket = new ClientboundChangeDifficultyPacket(difficulty, true);
+        ClientboundEntityEventPacket serverEntityStatusPacket = new ClientboundEntityEventPacket((int) packet.getRuntimeEntityId(), EntityEvent.PLAYER_OP_PERMISSION_LEVEL_0);
         Vector3f position = packet.getPlayerPosition();
         Vector2f rotation = packet.getRotation();
-        ServerPlayerPositionRotationPacket serverPlayerPositionRotationPacket = new ServerPlayerPositionRotationPacket(position.getX(), position.getY(), position.getZ(), rotation.getY(), rotation.getX(), 1, true);
-        ServerPluginMessagePacket serverPluginMessagePacket = new ServerPluginMessagePacket("minecraft:brand", packet.getServerEngine().getBytes(StandardCharsets.UTF_8));
-        
-        player.getJavaSession().send(serverJoinGamePacket);
-        player.getJavaSession().send(serverPluginMessagePacket);
-        player.getJavaSession().send(serverDifficultyPacket);
-        player.getJavaSession().send(serverPlayerPositionRotationPacket);
-        player.getJavaSession().send(serverEntityStatusPacket);
+        ClientboundPlayerPositionPacket serverPlayerPositionRotationPacket = new ClientboundPlayerPositionPacket(position.getX(), position.getY(), position.getZ(), rotation.getY(), rotation.getX(), 1, true);
+        byte[] data = ((packet.getServerEngine() == "") ? "Barrel Dev" : packet.getServerEngine()).getBytes(StandardCharsets.UTF_8);
+        ClientboundCustomPayloadPacket serverPluginMessagePacket1 = new ClientboundCustomPayloadPacket("minecraft:register", data);
+        ClientboundCustomPayloadPacket serverPluginMessagePacket2 = new ClientboundCustomPayloadPacket("minecraft:brand", data);
+        ClientboundSetDefaultSpawnPositionPacket defaultSpawnPositionPacket = new ClientboundSetDefaultSpawnPositionPacket(new Position(packet.getDefaultSpawn().getX(), packet.getDefaultSpawn().getY(), packet.getDefaultSpawn().getZ()), 0);
+        ClientboundSetChunkCacheCenterPacket clientboundSetChunkCacheCenterPacket = new ClientboundSetChunkCacheCenterPacket((int)position.getX() >> 4, (int)position.getZ() >> 4); 
+        player.javaSession.send(serverPluginMessagePacket1);
+        player.javaSession.send(serverPluginMessagePacket2);
+        player.javaSession.send(serverJoinGamePacket);
+        player.javaSession.send(serverDifficultyPacket);
+        player.javaSession.send(defaultSpawnPositionPacket);
+        player.javaSession.send(serverPlayerPositionRotationPacket);
+        player.javaSession.send(serverEntityStatusPacket);
+        player.javaSession.send(clientboundSetChunkCacheCenterPacket);
 
-        SetLocalPlayerAsInitializedPacket setLocalPlayerAsInitializedPacket = new SetLocalPlayerAsInitializedPacket();
-        setLocalPlayerAsInitializedPacket.setRuntimeEntityId(packet.getRuntimeEntityId());
-        player.getBedrockClient().getSession().sendPacket(setLocalPlayerAsInitializedPacket);
-
-        player.setRuntimeEntityId((int) packet.getRuntimeEntityId());
+        player.movementMode = packet.getPlayerMovementSettings().getMovementMode();
+        player.serverversion = packet.getVanillaVersion();
+        player.gameType = packet.getPlayerGameType();
+        player.uniqueEntityId = ((int) packet.getUniqueEntityId());
+        player.runtimeEntityId = ((int) packet.getRuntimeEntityId());
     }
-    
-    public static Difficulty convertDifficultyToJE(int diff) {
-        Difficulty difficulty;
-        switch (diff) {
-            case 0: {
-                difficulty = Difficulty.PEACEFUL;
-                break;
+
+    private static byte[] writeVarInt(int value) {
+        byte[] data = new byte[getVarIntLength(value)];
+        int index = 0;
+        do {
+            byte temp = (byte) (value & 0b01111111);
+            value >>>= 7;
+            if (value != 0) {
+                temp |= 0b10000000;
             }
-            case 1: {
-                difficulty = Difficulty.EASY;
-                break;
-            }
-            case 3: {
-                difficulty = Difficulty.HARD;
-                break;
-            }
-            default: {
-                difficulty = Difficulty.NORMAL;
-                break;
-            }
+            data[index] = temp;
+            index++;
+        } while (value != 0);
+        return data;
+    }
+
+    private static int getVarIntLength(int number) {
+        if ((number & 0xFFFFFF80) == 0) {
+            return 1;
+        } else if ((number & 0xFFFFC000) == 0) {
+            return 2;
+        } else if ((number & 0xFFE00000) == 0) {
+            return 3;
+        } else if ((number & 0xF0000000) == 0) {
+            return 4;
         }
-        return difficulty;
+        return 5;
     }
-    
 }

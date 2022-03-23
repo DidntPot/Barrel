@@ -10,12 +10,12 @@ public class ClientPlayerRotationPacket implements JavaPacketTranslator {
 
     @Override
     public void translate(Packet pk, Player player) {
-        com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerRotationPacket packet = (com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerRotationPacket) pk;
+        com.github.steveice10.mc.protocol.packet.ingame.serverbound.player.ServerboundMovePlayerRotPacket packet = (com.github.steveice10.mc.protocol.packet.ingame.serverbound.player.ServerboundMovePlayerRotPacket) pk;
         MovePlayerPacket movePlayerPacket = new MovePlayerPacket();
 
         movePlayerPacket.setMode(MovePlayerPacket.Mode.HEAD_ROTATION);
         movePlayerPacket.setOnGround(packet.isOnGround());
-        movePlayerPacket.setRuntimeEntityId(player.getRuntimeEntityId());
+        movePlayerPacket.setRuntimeEntityId(player.runtimeEntityId);
         movePlayerPacket.setRidingRuntimeEntityId(0);
         movePlayerPacket.setPosition(player.getVector3f());
         movePlayerPacket.setRotation(Vector3f.from(packet.getPitch(), packet.getYaw(), 0));
@@ -23,6 +23,6 @@ public class ClientPlayerRotationPacket implements JavaPacketTranslator {
         movePlayerPacket.setEntityType(0);
 
         player.setRotation(packet.getYaw(), packet.getPitch());
-        player.getBedrockClient().getSession().sendPacket(movePlayerPacket);
+        player.bedrockClient.getSession().sendPacket(movePlayerPacket);
     }
 }

@@ -4,7 +4,7 @@ import com.github.steveice10.mc.auth.data.GameProfile;
 import com.github.steveice10.mc.protocol.data.game.PlayerListEntry;
 import com.github.steveice10.mc.protocol.data.game.PlayerListEntryAction;
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerPlayerListEntryPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundPlayerInfoPacket;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
 import net.kyori.adventure.text.Component;
 import org.barrelmc.barrel.network.translator.interfaces.BedrockPacketTranslator;
@@ -28,11 +28,11 @@ public class PlayerListPacket implements BedrockPacketTranslator {
         PlayerListEntry[] playerListEntriesL = playerListEntries.toArray(new PlayerListEntry[0]);
         switch (packet.getAction()) {
             case ADD: {
-                player.getJavaSession().send(new ServerPlayerListEntryPacket(PlayerListEntryAction.ADD_PLAYER, playerListEntriesL));
+                player.javaSession.send(new ClientboundPlayerInfoPacket(PlayerListEntryAction.ADD_PLAYER, playerListEntriesL));
                 break;
             }
             case REMOVE: {
-                player.getJavaSession().send(new ServerPlayerListEntryPacket(PlayerListEntryAction.REMOVE_PLAYER, playerListEntriesL));
+                player.javaSession.send(new ClientboundPlayerInfoPacket(PlayerListEntryAction.REMOVE_PLAYER, playerListEntriesL));
                 break;
             }
         }

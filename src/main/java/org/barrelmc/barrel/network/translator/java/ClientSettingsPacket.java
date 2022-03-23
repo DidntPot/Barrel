@@ -9,10 +9,10 @@ public class ClientSettingsPacket implements JavaPacketTranslator {
 
     @Override
     public void translate(Packet pk, Player player) {
-        com.github.steveice10.mc.protocol.packet.ingame.client.ClientSettingsPacket settingsPacket = (com.github.steveice10.mc.protocol.packet.ingame.client.ClientSettingsPacket) pk;
+        com.github.steveice10.mc.protocol.packet.ingame.serverbound.ServerboundClientInformationPacket settingsPacket = (com.github.steveice10.mc.protocol.packet.ingame.serverbound.ServerboundClientInformationPacket) pk;
         RequestChunkRadiusPacket chunkRadiusPacket = new RequestChunkRadiusPacket();
 
         chunkRadiusPacket.setRadius(settingsPacket.getRenderDistance());
-        player.getBedrockClient().getSession().sendPacket(chunkRadiusPacket);
+        player.bedrockClient.getSession().sendPacket(chunkRadiusPacket);
     }
 }
