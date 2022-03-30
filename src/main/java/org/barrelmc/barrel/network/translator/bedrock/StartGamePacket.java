@@ -1,5 +1,6 @@
 package org.barrelmc.barrel.network.translator.bedrock;
 
+import java.io.ByteArrayOutputStream;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundChangeDifficultyPacket;
 import com.github.steveice10.mc.protocol.data.game.entity.EntityEvent;
@@ -10,6 +11,7 @@ import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.Clientb
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.level.ClientboundSetDefaultSpawnPositionPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.clientbound.ClientboundCustomPayloadPacket;
 import com.github.steveice10.mc.protocol.data.game.setting.Difficulty;
+import com.github.steveice10.packetlib.io.stream.StreamNetOutput;
 import com.nukkitx.math.vector.Vector2f;
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.protocol.bedrock.BedrockPacket;
@@ -52,9 +54,13 @@ public class StartGamePacket implements BedrockPacketTranslator {
         Vector3f position = packet.getPlayerPosition();
         Vector2f rotation = packet.getRotation();
         ClientboundPlayerPositionPacket serverPlayerPositionRotationPacket = new ClientboundPlayerPositionPacket(position.getX(), position.getY(), position.getZ(), rotation.getY(), rotation.getX(), 1, true);
-//         byte[] data = ((packet.getServerEngine() == "") ? "Barrel Dev" : packet.getServerEngine()).getBytes(StandardCharsets.UTF_8);
-//         ClientboundCustomPayloadPacket serverPluginMessagePacket1 = new ClientboundCustomPayloadPacket("minecraft:register", data);
-//         ClientboundCustomPayloadPacket serverPluginMessagePacket2 = new ClientboundCustomPayloadPacket("minecraft:brand", data);
+	ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        StreamNetOutput data = new StreamNetOutput(bos);
+        try {
+            data.writeString((packet.getServerEngine() == "") ? "Barrel Dev" : packet.getServerEngine());
+        } catch (Exception e) {
+        }
+        ClientboundCustomPayloadPacket serverPluginMessagePacket2 = new ClientboundCustomPayloadPacket("minecraft:brand", bos.toByteArray());
         ClientboundSetDefaultSpawnPositionPacket defaultSpawnPositionPacket = new ClientboundSetDefaultSpawnPositionPacket(new Position(packet.getDefaultSpawn().getX(), packet.getDefaultSpawn().getY(), packet.getDefaultSpawn().getZ()), 0);
         ClientboundSetChunkCacheCenterPacket clientboundSetChunkCacheCenterPacket = new ClientboundSetChunkCacheCenterPacket((int)position.getX() >> 4, (int)position.getZ() >> 4); 
         player.javaSession.send(serverPluginMessagePacket1);
